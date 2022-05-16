@@ -15081,135 +15081,134 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 	<p>Now we’re ready to start our work!</p>
 	
 	<h2>Data Visualization and Analysis</h2>
-	<p>After doing a lot of deletion and separation, we have two dataframes: teamData and playerData. Each dataframe has the following information:
+	<p>After doing a lot of deletion and separation, we have two dataframes: teamData and playerData. Each dataframe has the following information:</p>
 
-Definitions
+<p>Definitions</p>
 
--          Position: Each player plays one of five positions: top, jng, mid, bot, sup. Each position represents a different position on the map
+<p>-          Position: Each player plays one of five positions: top, jng, mid, bot, sup. Each position represents a different position on the map</p>
 
--          CS: Score of number of minions and monsters killed. Higher the number, more minions/monsters killed
+<p>-          CS: Score of number of minions and monsters killed. Higher the number, more minions/monsters killed</p>
 
--          Bans: Each team gets to ban champions that they don't want the other team playing
+<p>-          Bans: Each team gets to ban champions that they don't want the other team playing</p>
 
--          XP: As you sit next to dying minions and monsters, they give xp that help players level up and get stronger
+<p>-          XP: As you sit next to dying minions and monsters, they give xp that help players level up and get stronger</p>
 
-teamData:
+<p>teamData:</p>
 
--          League (what region the team plays in)
+<p>-          League (what region the team plays in)</p>
 
--          Playoffs (0 if not a playoffs game, 1 if it is)
+<p>-          Playoffs (0 if not a playoffs game, 1 if it is)</p>
 
--          Date (date of game)
+<p>-          Date (date of game)</p>
 
--          Patch (what patch the game is played on)
+<p>-          Patch (what patch the game is played on)</p>
 
--          Side (red or blue, each team starts on a different side for the game)
+<p>-          Side (red or blue, each team starts on a different side for the game)</p>
 
--          Teamname
+<p>-          Teamname</p>
 
--          Ban1, Ban2, Ban3, Ban4, Ban5 (ban 1-5 for the team)
+<p>-          Ban1, Ban2, Ban3, Ban4, Ban5 (ban 1-5 for the team)</p>
 
--          Gamelength (length of game)
+<p>-          Gamelength (length of game)</p>
 
--          Result (0 for loss, 1 for win)
+<p>-          Result (0 for loss, 1 for win)</p>
 
--          Kills, deaths, assists (total kills, deaths, assists for team)
+<p>-          Kills, deaths, assists (total kills, deaths, assists for team)</p>
 
--          Firstblood (first blood is first kill of game) (0 if team did not get first blood, 1 if team did)
+<p>-          Firstblood (first blood is first kill of game) (0 if team did not get first blood, 1 if team did)</p>
 
--          Team kpm (team kills per minute)
+<p>-          Team kpm (team kills per minute)</p>
 
--          Firstdragon (first dragon killed for the game) (0 if team did not get first dragon, 1 if team did)
+<p>-          Firstdragon (first dragon killed for the game) (0 if team did not get first dragon, 1 if team did)</p>
 
--          Dragons (total team dragons)
+<p>-          Dragons (total team dragons)</p>
 
--          Infernals, mountains, clouds, oceans, hextechs, elders (type of dragon obtained by team)
+<p>-          Infernals, mountains, clouds, oceans, hextechs, elders (type of dragon obtained by team)</p>
 
--          Heralds (number of heralds, type of monster, killed by team)
+<p>-          Heralds (number of heralds, type of monster, killed by team)</p>
 
--          Barons (number of barons, type of monster, killed by team)
+<p>-          Barons (number of barons, type of monster, killed by team)</p>
 
--          Firsttower (first tower killed for the game) (0 if team did not get first tower, 1 if team did)
+<p>-          Firsttower (first tower killed for the game) (0 if team did not get first tower, 1 if team did)</p>
 
--          Towers (total towers destroyed by team)
+<p>-          Towers (total towers destroyed by team)</p>
 
--          Turretplates (total turretplates obtained by team)
+<p>-          Turretplates (total turretplates obtained by team)</p>
 
--          Inhibitors (total inhibitors destroyed by team)
+<p>-          Inhibitors (total inhibitors destroyed by team)</p>
 
--          Damagetochampions (total damage to champions)
+<p>-          Damagetochampions (total damage to champions)</p>
 
--          Dpm (total damage per minute)
+<p>-          Dpm (total damage per minute)</p>
 
--          Wardsplaced (total wards placed by team)
+<p>-          Wardsplaced (total wards placed by team)</p>
 
--          Controlwardsbought (total control wards bought)
+<p>-          Controlwardsbought (total control wards bought)</p>
 
--          Visionscore (total team vision score)
+<p>-          Visionscore (total team vision score)</p>
 
--          Totalgold (total team gold)
+<p>-          Totalgold (total team gold)</p>
 
--          Gspd (gold spread compared to the other team)
+<p>-          Gspd (gold spread compared to the other team)</p>
 
--          Minionkills, monsterkills (team minion, monster kills)
+<p>-          Minionkills, monsterkills (team minion, monster kills)</p>
 
--          Goldat15, xpat15, csat15 (team gold, xp, cs at 15 minutes into the game)
+<p>-          Goldat15, xpat15, csat15 (team gold, xp, cs at 15 minutes into the game)</p>
 
--          Golddiffat15, xpdiffat15, csdiffat15 (team gold, xp, cs differential compared to opponents at 15 minutes into the game)
+<p>-          Golddiffat15, xpdiffat15, csdiffat15 (team gold, xp, cs differential compared to opponents at 15 minutes into the game)</p>
 
--          Killsat15, deathsat15 (team kills, deaths at 15 minutes into the game)
+<p>-          Killsat15, deathsat15 (team kills, deaths at 15 minutes into the game)</p>
 
-playerData
+<p>playerData</p>
 
--          League (what region the player plays in)
+<p>-          League (what region the player plays in)</p>
 
--          Playoffs (0 if not a playoffs game, 1 if it is)
+<p>-          Playoffs (0 if not a playoffs game, 1 if it is)</p>
 
--          Date (date of game)
+<p>-          Date (date of game)</p>
 
--          Patch (what patch the game is played on)
+<p>-          Patch (what patch the game is played on)</p>
 
--          Side (red or blue, each team starts on a different side for the game)
+<p>-          Side (red or blue, each team starts on a different side for the game)</p>
 
--          Position (position by player)
+<p>-          Position (position by player)</p>
 
--          Playername
+<p>-          Playername</p>
 
--          Teamname
+<p>-          Teamname</p>
 
--          Champion (character player played that game)
+<p>-          Champion (character player played that game)</p>
 
--          Gamelength (length of game)
+<p>-          Gamelength (length of game)</p>
 
--          Result (0 for loss, 1 for win)
+<p>-          Result (0 for loss, 1 for win)</p>
 
--          Kills, deaths, assists (total kills, deaths, assists for player)
+<p>-          Kills, deaths, assists (total kills, deaths, assists for player)</p>
 
--          Damagetochampions (total damage to champions by player)
+<p>-          Damagetochampions (total damage to champions by player)</p>
 
--          Dpm (total damage per minute by player)
+<p>-          Dpm (total damage per minute by player)</p>
 
--          Damageshare (percent of damage compared to team)
+<p>-          Damageshare (percent of damage compared to team)</p>
 
--          Wardsplaced (total wards placed by player)
+<p>-          Wardsplaced (total wards placed by player)</p>
 
--          Controlwardsbought (total control wards bought by player)
+<p>-          Controlwardsbought (total control wards bought by player)</p>
 
--          Visionscore (total player vision score)
+<p>-          Visionscore (total player vision score)</p>
 
--          Totalgold (total player gold)
+<p>-          Totalgold (total player gold)</p>
 
--          Totalcs (total cs, by player)
+<p>-          Totalcs (total cs, by player)</p>
 
--          Minionkills, monsterkills (player minion, monster kills)
+<p>-          Minionkills, monsterkills (player minion, monster kills)</p>
 
--          Goldat15, xpat15, csat15 (player gold, xp, cs at 15 minutes into the game)
+<p>-          Goldat15, xpat15, csat15 (player gold, xp, cs at 15 minutes into the game)</p>
 
--          Golddiffat15, xpdiffat15, csdiffat15 (player gold, xp, cs differential compared to opponents at 15 minutes into the game)
+<p>-          Golddiffat15, xpdiffat15, csdiffat15 (player gold, xp, cs differential compared to opponents at 15 minutes into the game)</p>
 
--          Killsat15, deathsat15 (player kills, deaths at 15 minutes into the game)
+<p>-          Killsat15, deathsat15 (player kills, deaths at 15 minutes into the game)</p>
 		
-	</p>
 	<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
