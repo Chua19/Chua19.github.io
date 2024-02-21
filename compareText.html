@@ -11,36 +11,50 @@
     .container {
         display: flex;
         justify-content: space-between;
+        flex-wrap: wrap;
     }
     .file-container {
         width: 45%;
         padding: 10px;
         border: 1px solid #ccc;
         overflow-y: auto;
+        word-wrap: break-word;
     }
-    .difference {
-        color: red;
+    .added {
+        background-color: #ccffcc; /* light green */
+    }
+    .removed {
+        background-color: #ffe6e6; /* light red */
+    }
+    .replaced {
+        
     }
 </style>
+<script src="diff.js"></script>
 </head>
 <body>
     <h1>Text File Comparator</h1>
     <div class="container">
         <div class="file-container" id="file1-container">
-            <h2>File 1</h2>
-        </div>
-        <div class="file-container" id="file2-container">
-            <h2>File 2</h2>
+            <h2>Reference File</h2>
         </div>
     </div>
-    <input type="file" id="file1" accept=".txt">
-    <input type="file" id="file2" accept=".txt">
+    <input type="file" id="reference-file" accept=".txt">
+    <br>
+    <div class="container">
+        <div class="file-container" id="file2-container">
+            <h2>Files to Compare</h2>
+        </div>
+    </div>
+    <input type="file" id="compare-files" accept=".txt" multiple>
+    <br>
+    <button onclick="selectReferenceFile()">Select Reference File</button>
     <button onclick="compareFiles()">Compare</button>
-	<td><pre id="result"></pre></td>
-	<script src="diff.js"></script>
-	<script>
-		var result = document.getElementById('result');
-		function readFile(file, containerId) {
+
+    <script>
+        let referenceText = '';
+
+        function readFile(file, callback) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 const fileContent = event.target.result;
@@ -48,50 +62,66 @@
                 const lines = fileContent.split('\n').slice(1).join('\n');
                 // Remove spaces and newlines
                 const cleanedContent = lines.replace(/\s+/g, '');
-                document.getElementById(containerId).innerText = cleanedContent;
+                callback(cleanedContent);
             };
             reader.readAsText(file);
         }
 
-        function compareFiles() {
-            const file1 = document.getElementById('file1').files[0];
-            const file2 = document.getElementById('file2').files[0];
-
-            if (!file1 || !file2) {
-                alert('Please select both files.');
+        function selectReferenceFile() {
+            const referenceFile = document.getElementById('reference-file').files[0];
+            if (!referenceFile) {
+                alert('Please select a reference file.');
                 return;
             }
+            readFile(referenceFile, function(content) {
+                referenceText = content;
+                document.getElementById('file1-container').innerText = content;
+            });
+        }
 
-            readFile(file1, 'file1-container');
-            readFile(file2, 'file2-container');
+        function compareFiles() {
+            const files = document.getElementById('compare-files').files;
+            if (!referenceText) {
+                alert('Please select a reference file.');
+                return;
+            }
+            const fileContainer = document.getElementById('file2-container');
+            fileContainer.innerHTML = '';
 
-            const text1 = document.getElementById('file1-container').innerText;
-            const text2 = document.getElementById('file2-container').innerText;
-			
-			var diff = Diff["diffChars"](text1, text2);
-			var fragment = document.createDocumentFragment();
-			for (var i=0; i < diff.length; i++) {
+            for (let i = 0; i < files.length; i++) {
+                const currentFile = files[i];
+                const fileDiv = document.createElement('div');
+                fileDiv.classList.add('file-container');
+                fileContainer.appendChild(fileDiv);
 
-				if (diff[i].added && diff[i + 1] && diff[i + 1].removed) {
-					var swap = diff[i];
-					diff[i] = diff[i + 1];
-					diff[i + 1] = swap;
-				}
+                const header = document.createElement('h2');
+                header.textContent = `File ${i + 1}`;
+                fileDiv.appendChild(header);
 
-				var node;
-				if (diff[i].removed) {
-					node = document.createElement('del');
-					node.appendChild(document.createTextNode(diff[i].value));
-				} else if (diff[i].added) {
-					node = document.createElement('ins');
-					node.appendChild(document.createTextNode(diff[i].value));
-				} else {
-					node = document.createTextNode(diff[i].value);
-				}
-				fragment.appendChild(node);
-			}
+                readFile(currentFile, function(currentContent) {
+                    const diff = Diff["diffChars"](referenceText, currentContent);
 
-			result.textContent = '';
-			result.appendChild(fragment);
-		}
-	</script>
+                    diff.forEach(function(part) {
+                        if (!part.removed) {
+                            const span = document.createElement('span');
+                            span.textContent = part.value;
+                            
+                            if (part.added) {
+                                span.classList.add('added');
+                            } else if (part.removed) {
+                                span.classList.add('removed');
+                            } else {
+                                // Check if the letter is the same
+                                if (part.value.trim() !== '') {
+                                    span.classList.add('replaced');
+                                }
+                            }
+                            fileDiv.appendChild(span);
+                        }
+                    });
+                });
+            }
+        }
+    </script>
+</body>
+</html>
