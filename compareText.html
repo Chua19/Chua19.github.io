@@ -32,9 +32,6 @@
     .highlighted {
         background-color: #ffccff; /* light purple */
     }
-    .green-block-count {
-        font-weight: bold;
-    }
 </style>
 <script src="diff.js"></script>
 </head>
@@ -52,14 +49,13 @@
             <h2>Files to Compare</h2>
         </div>
     </div>
-    <input type="file" id="compare-file" accept=".txt">
-    <button onclick="addCompareFile()">Add Compare File</button>
+    <input type="file" id="compare-files" accept=".txt" multiple>
     <br>
-    <button onclick="selectReferenceAndCompare()">Select Reference File and Compare</button>
+    <button onclick="selectReferenceFile()">Select Reference File</button>
+    <button onclick="compareFiles()">Compare</button>
 
     <script>
         let referenceText = '';
-        let greenBlockCounts = []; // Array to store green block counts for each file
 
         function readFile(file, callback) {
             const reader = new FileReader();
@@ -74,7 +70,7 @@
             reader.readAsText(file);
         }
 
-        function selectReferenceAndCompare() {
+        function selectReferenceFile() {
             const referenceFile = document.getElementById('reference-file').files[0];
             if (!referenceFile) {
                 alert('Please select a reference file.');
@@ -83,86 +79,55 @@
             readFile(referenceFile, function(content) {
                 referenceText = content;
                 document.getElementById('file1-container').innerText = content;
-                compareFiles();
             });
         }
 
-        function addCompareFile() {
-            const compareFile = document.getElementById('compare-file').files[0];
-            if (!compareFile) {
-                alert('Please select a compare file.');
+        function compareFiles() {
+            const files = document.getElementById('compare-files').files;
+            if (!referenceText) {
+                alert('Please select a reference file.');
                 return;
             }
             const fileContainer = document.getElementById('file2-container');
-            const fileDiv = document.createElement('div');
-            fileDiv.classList.add('file-container');
-            fileContainer.appendChild(fileDiv);
+            fileContainer.innerHTML = '';
 
-            const header = document.createElement('h2');
-            header.textContent = `File ${fileContainer.children.length}`;
-            fileDiv.appendChild(header);
+            let prevStatus = ''; // Tracks previous status
 
-            let greenBlockCount = 0; // Green block count for current file
+            for (let i = 0; i < files.length; i++) {
+                const currentFile = files[i];
+                const fileDiv = document.createElement('div');
+                fileDiv.classList.add('file-container');
+                fileContainer.appendChild(fileDiv);
 
-            readFile(compareFile, function(currentContent) {
-                const diff = Diff["diffChars"](referenceText, currentContent);
+                const header = document.createElement('h2');
+                header.textContent = `File ${i + 1}`;
+                fileDiv.appendChild(header);
 
-                let block = [];
-                let prevStatus = '';
-                diff.forEach(function(part) {
-                    const span = document.createElement('span');
-                    span.textContent = part.value;
+                readFile(currentFile, function(currentContent) {
+                    const diff = Diff["diffChars"](referenceText, currentContent);
 
-                    if (part.added) {
-                        if (prevStatus !== 'added') {
-                            handleBlock(block, fileDiv);
-                            block = [];
+                    diff.forEach(function(part) {
+                        const span = document.createElement('span');
+                        span.textContent = part.value;
+
+                        // Apply highlight color based on the previous part's status
+                        if (prevStatus === 'added' && part.removed) {
+                            span.classList.add('highlighted'); // Light purple
+                        } else if (prevStatus === 'removed' && part.added) {
+                            span.classList.add('highlighted'); // Light purple
+                        } else if (part.added) {
+                            span.classList.add('added'); // Light green
+                            prevStatus = 'added';
+                        } else if (part.removed) {
+                            span.classList.add('removed'); // Light red
+                            prevStatus = 'removed';
+                        } else {
+                            prevStatus = ''; // Reset previous status
                         }
-                        span.classList.add('added');
-                        prevStatus = 'added';
-                    } else if (part.removed) {
-                        if (prevStatus !== 'removed') {
-                            handleBlock(block, fileDiv);
-                            block = [];
-                        }
-                        span.classList.add('removed');
-                        prevStatus = 'removed';
-                    } else {
-                        if (prevStatus !== '') {
-                            handleBlock(block, fileDiv);
-                            block = [];
-                        }
-                        prevStatus = '';
-                    }
-                    block.push(span);
+                        fileDiv.appendChild(span);
+                    });
                 });
-                handleBlock(block, fileDiv);
-
-                greenBlockCount = countGreenBlocks(fileDiv);
-                greenBlockCounts.push(greenBlockCount);
-                displayGreenBlockCount(fileDiv, greenBlockCount);
-            });
-        }
-
-        function handleBlock(block, fileDiv) {
-            if (block.length > 0) {
-                let blockDiv = document.createElement('div');
-                blockDiv.classList.add('block');
-                block.forEach(span => blockDiv.appendChild(span));
-                fileDiv.appendChild(blockDiv);
             }
-        }
-
-        function countGreenBlocks(fileDiv) {
-            const greenBlocks = fileDiv.querySelectorAll('.added');
-            return greenBlocks.length;
-        }
-
-        function displayGreenBlockCount(fileDiv, greenBlockCount) {
-            const greenBlockCountElement = document.createElement('div');
-            greenBlockCountElement.classList.add('green-block-count');
-            greenBlockCountElement.innerText = `Number of Green Blocks: ${greenBlockCount}`;
-            fileDiv.appendChild(greenBlockCountElement);
         }
     </script>
 </body>
