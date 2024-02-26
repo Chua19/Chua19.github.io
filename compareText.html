@@ -3,131 +3,205 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Text File Comparator</title>
+<title>File Table Creator</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
+    table {
+        border-collapse: collapse;
+        margin-bottom: 20px;
     }
-    .container {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-    }
-    .file-container {
-        width: 45%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        overflow-y: auto;
-        word-wrap: break-word;
-    }
-    .added {
-        background-color: #ccffcc; /* light green */
-    }
-    .removed {
-        background-color: #ffe6e6; /* light red */
-    }
-    .replaced {
-        background-color: #ffff99; /* light yellow */
-    }
-    .highlighted {
-        background-color: #ffccff; /* light purple */
+    th, td {
+        border: 1px solid black;
+        padding: 4px;
+        max-width: 500px; /* Adjust this value as needed */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+		text-align: center;
     }
 </style>
-<script src="diff.js"></script>
 </head>
 <body>
-    <h1>Text File Comparator</h1>
-    <div class="container">
-        <div class="file-container" id="file1-container">
-            <h2>Reference File</h2>
-        </div>
-    </div>
-    <input type="file" id="reference-file" accept=".txt">
-    <br>
-    <div class="container">
-        <div class="file-container" id="file2-container">
-            <h2>Files to Compare</h2>
-        </div>
-    </div>
-    <input type="file" id="compare-files" accept=".txt" multiple>
-    <br>
-    <button onclick="selectReferenceFile()">Select Reference File</button>
-    <button onclick="compareFiles()">Compare</button>
-
+    <input type="file" id="file1" accept=".txt">
+    <input type="file" id="file2" accept=".txt">
+    <button onclick="createTables()">Create Tables</button>
+    <div id="tableContainer"></div>
+	<div hidden id="output1"></div>
+	<div hidden id="output2"></div>
+	<script src="diff.js"></script>
     <script>
-        let referenceText = '';
+        function createTables() {
+            const file1 = document.getElementById('file1').files[0];
+            const file2 = document.getElementById('file2').files[0];
 
-        function readFile(file, callback) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const fileContent = event.target.result;
-                // Remove the first line
-                const lines = fileContent.split('\n').slice(1).join('\n');
-                // Remove spaces and newlines
-                const cleanedContent = lines.replace(/\s+/g, '');
-                callback(cleanedContent);
-            };
-            reader.readAsText(file);
-        }
-
-        function selectReferenceFile() {
-            const referenceFile = document.getElementById('reference-file').files[0];
-            if (!referenceFile) {
-                alert('Please select a reference file.');
+            if (!file1 || !file2) {
+                alert("Please select both files.");
                 return;
             }
-            readFile(referenceFile, function(content) {
-                referenceText = content;
-                document.getElementById('file1-container').innerText = content;
-            });
-        }
 
-        function compareFiles() {
-            const files = document.getElementById('compare-files').files;
-            if (!referenceText) {
-                alert('Please select a reference file.');
-                return;
-            }
-            const fileContainer = document.getElementById('file2-container');
-            fileContainer.innerHTML = '';
+            const reader1 = new FileReader();
+            reader1.onload = function() {
+                let content1 = reader1.result;
+                // Remove first line
+                content1 = content1.substring(content1.indexOf('\n') + 1);
+                // Remove leading and trailing whitespace
+                content1 = content1.trim();
+                // Remove newlines and spaces
+                content1 = content1.replace(/[\n\r\s]+/g, '');
 
-            let prevStatus = ''; // Tracks previous status
+                const reader2 = new FileReader();
+                reader2.onload = function() {
+                    let content2 = reader2.result;
+                    // Remove first line
+                    content2 = content2.substring(content2.indexOf('\n') + 1);
+                    // Remove leading and trailing whitespace
+                    content2 = content2.trim();
+                    // Remove newlines and spaces
+                    content2 = content2.replace(/[\n\r\s]+/g, '');
 
-            for (let i = 0; i < files.length; i++) {
-                const currentFile = files[i];
-                const fileDiv = document.createElement('div');
-                fileDiv.classList.add('file-container');
-                fileContainer.appendChild(fileDiv);
+                    const tableContainer = document.getElementById('tableContainer');
+                    tableContainer.innerHTML = ''; // Clear previous tables if exist
 
-                const header = document.createElement('h2');
-                header.textContent = `File ${i + 1}`;
-                fileDiv.appendChild(header);
 
-                readFile(currentFile, function(currentContent) {
-                    const diff = Diff["diffChars"](referenceText, currentContent);
+					var diff1 = Diff["diffChars"](content1, content2);
+					var diff2 = Diff["diffChars"](content2, content1);
 
-                    diff.forEach(function(part) {
-                        const span = document.createElement('span');
-                        span.textContent = part.value;
+					var output1 = document.getElementById("output1");
+					output1.innerHTML = "";
 
-                        // Apply highlight color based on the previous part's status
-                        if (prevStatus === 'added' && part.removed) {
-                            span.classList.add('highlighted'); // Light purple
-                        } else if (prevStatus === 'removed' && part.added) {
-                            span.classList.add('highlighted'); // Light purple
-                        } else if (part.added) {
-                            span.classList.add('added'); // Light green
-                            prevStatus = 'added';
-                        } else if (part.removed) {
-                            span.classList.add('removed'); // Light red
-                            prevStatus = 'removed';
-                        } else {
-                            prevStatus = ''; // Reset previous status
+					var output2 = document.getElementById("output2");
+					output2.innerHTML = "";
+					
+					var o3 = "";
+					var o4 = "";
+
+					diff1.forEach(function(part) {
+						var color = part.added ? 'green' :
+									part.removed ? 'red' : 'black';
+						if (!part.added) {
+							for (const c of part.value) {
+								var span = document.createElement('span');
+								span.style.color = color;
+								span.appendChild(document.createTextNode(c));
+								output1.appendChild(span);
+							}
+						}
+					});
+
+					diff2.forEach(function(part) {
+						var color = part.added ? 'green' :
+									part.removed ? 'red' : 'black';
+						if (!part.added) {
+							for (const c of part.value) {
+								var span = document.createElement('span');
+								span.style.color = color;
+								span.appendChild(document.createTextNode(c));
+								output2.appendChild(span);
+							}
+						}
+					});
+
+					// Compare characters from output1 and output2 and modify outputs accordingly
+					var span1 = output1.querySelectorAll('span');
+					var span2 = output2.querySelectorAll('span');
+					var counter1 = 0;
+					var counter2 = 0;
+					while (counter1 < span1.length && counter2 < span2.length) {
+						var char1 = span1[counter1].textContent;
+						var char2 = span2[counter2].textContent;
+						if (char1 === char2) {
+							// Characters are the same
+							o3+=char1;
+							o4+='.';
+							counter1++;
+							counter2++;
+
+						} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color === 'red') {
+							// Both characters are red
+							o3+=char1;
+							o4+=char2;
+							counter1++;
+							counter2++;
+						} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color != 'red') {
+							o3+=char1;
+							o4+='-';
+							counter1++;
+						} else if (span1[counter1].style.color != 'red' && span2[counter2].style.color === 'red') {
+							o3+='-';
+							o4+=char2;
+							counter2++;
+						}
+						else {
+							counter1++;
+							counter2++;
+						}
+					}
+
+
+
+                    // Create tables for each 50 characters
+					var c1 = 0;
+					var c2 = 0;
+                    for (let i = 0; i < Math.max(content1.length, content2.length); i += 50) {
+                        const table = document.createElement('table');
+                        const tr1 = document.createElement('tr');
+                        const tr2 = document.createElement('tr');
+                        const tr3 = document.createElement('tr');
+
+                        // Populate rows
+						const f1 = document.createElement('td');
+                        const f2 = document.createElement('td');
+                        const f3 = document.createElement('td');
+						f2.textContent = file1.name;
+						f3.textContent = file2.name;
+						tr1.appendChild(f1);
+                        tr2.appendChild(f2);
+                        tr3.appendChild(f3);
+						
+                        for (let j = i; j < i + 50; j++) {
+							if (j > o3.length || j > o4.length) { break; }
+                            const td1 = document.createElement('td');
+                            const td2 = document.createElement('td');
+                            const td3 = document.createElement('td');
+
+                            td1.textContent = j + 1;
+                            td2.textContent = o3[j];
+							if (o3[j] != '-') {
+								c1++;
+							} 
+							if (c1 === 50) {
+								td2.style.textDecoration = "underline";
+								c1 = 0;
+							}
+							
+							
+                            td3.textContent = o4[j];
+							if (o4[j] != '-') {
+								c2++;
+							} 
+							if (c2 === 50) {
+								td3.style.textDecoration = "underline";
+								c2 = 0;
+							}
+							
+                            tr1.appendChild(td1);
+                            tr2.appendChild(td2);
+                            tr3.appendChild(td3);
                         }
-                        fileDiv.appendChild(span);
-                    });
-                });
-            }
+
+                        // Append rows to table
+                        table.appendChild(tr1);
+                        table.appendChild(tr2);
+                        table.appendChild(tr3);
+
+                        // Append table to container
+                        tableContainer.appendChild(table);
+                    }
+                };
+
+                reader2.readAsText(file2);
+            };
+
+            reader1.readAsText(file1);
         }
     </script>
 </body>
