@@ -1,208 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>File Table Creator</title>
-<style>
-    table {
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 4px;
-        max-width: 500px; /* Adjust this value as needed */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-		text-align: center;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML File Viewer</title>
+	<style>
+		table {
+			border-collapse: collapse;
+			margin-bottom: 20px;
+		}
+		th, td {
+			border: 1px solid black;
+			padding: 4px;
+			max-width: 500px; /* Adjust this value as needed */
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			text-align: center;
+		}
+	</style>
 </head>
 <body>
-    <input type="file" id="file1" accept=".txt">
-    <input type="file" id="file2" accept=".txt">
-    <button onclick="createTables()">Create Tables</button>
-    <div id="tableContainer"></div>
+    <h1>XML File Viewer</h1>
+    <input type="file" id="fileInput1" accept=".txt">
+    <input type="file" id="fileInput2" accept=".txt">
+    <button id="viewButton">View XML Files</button>
+    <div id="xmlContent"></div>
+	<div id="tableContainer"></div>
 	<div hidden id="output1"></div>
 	<div hidden id="output2"></div>
 	<script src="diff.js"></script>
-    <script>
-        function createTables() {
-            const file1 = document.getElementById('file1').files[0];
-            const file2 = document.getElementById('file2').files[0];
 
-            if (!file1 || !file2) {
+    <script>
+        async function getXMLContent(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch XML file. Status code: ${response.status}`);
+                }
+                return await response.text(); // You can use response.text() for XML content
+            } catch (error) {
+                console.error("Error fetching XML file:", error);
+                return null;
+            }
+        }
+		
+		function createTables(name1, name2) {
+            
+        }
+
+        document.getElementById("viewButton").addEventListener("click", async function() {
+            const fileInputs = [document.getElementById("fileInput1"), document.getElementById("fileInput2")];
+            const xmlContentDiv = document.getElementById("xmlContent");
+
+            xmlContentDiv.innerHTML = ''; // Clear previous content
+
+            if (fileInputs[0].files.length === 0 || fileInputs[1].files.length === 0) {
                 alert("Please select both files.");
                 return;
             }
 
-            const reader1 = new FileReader();
-            reader1.onload = function() {
-                let content1 = reader1.result;
-                // Remove first line
-                content1 = content1.substring(content1.indexOf('\n') + 1);
-                // Remove leading and trailing whitespace
-                content1 = content1.trim();
-                // Remove newlines and spaces
-                content1 = content1.replace(/[\n\r\s]+/g, '');
+            const promises = [];
+            for (let i = 0; i < fileInputs.length; i++) {
+                const fileInput = fileInputs[i];
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                promises.push(
+                    new Promise((resolve, reject) => {
+                        reader.onload = function(event) {
+                            const fileContent = event.target.result;
+							var firstLine = fileContent.slice(0, fileContent.indexOf("\n"));
+							var id = firstLine.substring(4, 10);
+							const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
+                            resolve(getXMLContent(url));
+                        };
+                        reader.readAsText(file);
+                    })
+                );
+            }
 
-                const reader2 = new FileReader();
-                reader2.onload = function() {
-                    let content2 = reader2.result;
-                    // Remove first line
-                    content2 = content2.substring(content2.indexOf('\n') + 1);
-                    // Remove leading and trailing whitespace
-                    content2 = content2.trim();
-                    // Remove newlines and spaces
-                    content2 = content2.replace(/[\n\r\s]+/g, '');
+            const [xmlContent1, xmlContent2] = await Promise.all(promises);
 
-                    const tableContainer = document.getElementById('tableContainer');
-                    tableContainer.innerHTML = ''; // Clear previous tables if exist
+            if (xmlContent1 && xmlContent2) {
+                // Display the XML content on the webpage
+                //const xmlDiv1 = document.createElement('div');
+                //xmlDiv1.innerText = `XML Content 1:\n${xmlContent1}`;
+                //xmlContentDiv.appendChild(xmlDiv1);
 
+                //const xmlDiv2 = document.createElement('div');
+                //xmlDiv2.innerText = `XML Content 2:\n${xmlContent2}`;
+                //xmlContentDiv.appendChild(xmlDiv2);
 
-					var diff1 = Diff["diffChars"](content1, content2);
-					var diff2 = Diff["diffChars"](content2, content1);
+				//DOM Parser
+				var parser1 = new DOMParser();  
+				doc1 = parser1.parseFromString(xmlContent1, 'text/xml');
+				var parser2 = new DOMParser();  
+				doc2 = parser2.parseFromString(xmlContent2, 'text/xml');
+				//Name
+				var x = doc1.getElementsByTagName("name"); 
+				n1 = x[0].firstChild;
+				var y = doc2.getElementsByTagName("name"); 
+				n2 = y[0].firstChild;
+				
+				//Domain Information
+				var y = doc1.getElementsByTagName("feature");
+				
+				var dtype1 = []
+				var dend1 = []
+				for (i = 1; i < y.length; i++) {
+					if (y[i].attributes.type.value != "topological domain" && y[i].attributes.type.value != "transmembrane region") { break; }
+					dtype1.push(y[i].attributes.description.value);
+					dend1.push(y[i].childNodes[1].childNodes[3].attributes.position.value);
+				}
+				
+				var y = doc2.getElementsByTagName("feature");
+				
+				var dtype2 = []
+				var dend2 = []
+				for (i = 1; i < y.length; i++) {
+					if (y[i].attributes.type.value != "topological domain" && y[i].attributes.type.value != "transmembrane region") { break; }
+					dtype2.push(y[i].attributes.description.value);
+					dend2.push(y[i].childNodes[1].childNodes[3].attributes.position.value);
+				}
+				
+				const file1 = document.getElementById('fileInput1').files[0];
+				const file2 = document.getElementById('fileInput2').files[0];
 
-					var output1 = document.getElementById("output1");
-					output1.innerHTML = "";
+				if (!file1 || !file2) {
+					alert("Please select both files.");
+					return;
+				}
 
-					var output2 = document.getElementById("output2");
-					output2.innerHTML = "";
-					
-					var o3 = "";
-					var o4 = "";
+				const reader1 = new FileReader();
+				reader1.onload = function() {
+					let content1 = reader1.result;
+					// Remove first line
+					content1 = content1.substring(content1.indexOf('\n') + 1);
+					// Remove leading and trailing whitespace
+					content1 = content1.trim();
+					// Remove newlines and spaces
+					content1 = content1.replace(/[\n\r\s]+/g, '');
 
-					diff1.forEach(function(part) {
-						var color = part.added ? 'green' :
-									part.removed ? 'red' : 'black';
-						if (!part.added) {
-							for (const c of part.value) {
-								var span = document.createElement('span');
-								span.style.color = color;
-								span.appendChild(document.createTextNode(c));
-								output1.appendChild(span);
-							}
-						}
-					});
+					const reader2 = new FileReader();
+					reader2.onload = function() {
+						let content2 = reader2.result;
+						// Remove first line
+						content2 = content2.substring(content2.indexOf('\n') + 1);
+						// Remove leading and trailing whitespace
+						content2 = content2.trim();
+						// Remove newlines and spaces
+						content2 = content2.replace(/[\n\r\s]+/g, '');
 
-					diff2.forEach(function(part) {
-						var color = part.added ? 'green' :
-									part.removed ? 'red' : 'black';
-						if (!part.added) {
-							for (const c of part.value) {
-								var span = document.createElement('span');
-								span.style.color = color;
-								span.appendChild(document.createTextNode(c));
-								output2.appendChild(span);
-							}
-						}
-					});
-
-					// Compare characters from output1 and output2 and modify outputs accordingly
-					var span1 = output1.querySelectorAll('span');
-					var span2 = output2.querySelectorAll('span');
-					var counter1 = 0;
-					var counter2 = 0;
-					while (counter1 < span1.length && counter2 < span2.length) {
-						var char1 = span1[counter1].textContent;
-						var char2 = span2[counter2].textContent;
-						if (char1 === char2) {
-							// Characters are the same
-							o3+=char1;
-							o4+='.';
-							counter1++;
-							counter2++;
-
-						} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color === 'red') {
-							// Both characters are red
-							o3+=char1;
-							o4+=char2;
-							counter1++;
-							counter2++;
-						} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color != 'red') {
-							o3+=char1;
-							o4+='-';
-							counter1++;
-						} else if (span1[counter1].style.color != 'red' && span2[counter2].style.color === 'red') {
-							o3+='-';
-							o4+=char2;
-							counter2++;
-						}
-						else {
-							counter1++;
-							counter2++;
-						}
-					}
+						const tableContainer = document.getElementById('tableContainer');
+						tableContainer.innerHTML = ''; // Clear previous tables if exist
 
 
+						var diff1 = Diff["diffChars"](content1, content2);
+						var diff2 = Diff["diffChars"](content2, content1);
 
-                    // Create tables for each 50 characters
-					var c1 = 0;
-					var c2 = 0;
-                    for (let i = 0; i < Math.max(content1.length, content2.length); i += 50) {
-                        const table = document.createElement('table');
-                        const tr1 = document.createElement('tr');
-                        const tr2 = document.createElement('tr');
-                        const tr3 = document.createElement('tr');
+						var output1 = document.getElementById("output1");
+						output1.innerHTML = "";
 
-                        // Populate rows
-						const f1 = document.createElement('td');
-                        const f2 = document.createElement('td');
-                        const f3 = document.createElement('td');
-						f2.textContent = file1.name;
-						f3.textContent = file2.name;
-						tr1.appendChild(f1);
-                        tr2.appendChild(f2);
-                        tr3.appendChild(f3);
+						var output2 = document.getElementById("output2");
+						output2.innerHTML = "";
 						
-                        for (let j = i; j < i + 50; j++) {
-							if (j > o3.length || j > o4.length) { break; }
-                            const td1 = document.createElement('td');
-                            const td2 = document.createElement('td');
-                            const td3 = document.createElement('td');
+						var o3 = "";
+						var o4 = "";
 
-                            td1.textContent = j + 1;
-                            td2.textContent = o3[j];
-							if (o3[j] != '-') {
-								c1++;
-							} 
-							if (c1 === 50) {
-								td2.style.textDecoration = "underline";
-								c1 = 0;
+						diff1.forEach(function(part) {
+							var color = part.added ? 'green' :
+										part.removed ? 'red' : 'black';
+							if (!part.added) {
+								for (const c of part.value) {
+									var span = document.createElement('span');
+									span.style.color = color;
+									span.appendChild(document.createTextNode(c));
+									output1.appendChild(span);
+								}
 							}
-							
-							
-                            td3.textContent = o4[j];
-							if (o4[j] != '-') {
-								c2++;
-							} 
-							if (c2 === 50) {
-								td3.style.textDecoration = "underline";
-								c2 = 0;
+						});
+
+						diff2.forEach(function(part) {
+							var color = part.added ? 'green' :
+										part.removed ? 'red' : 'black';
+							if (!part.added) {
+								for (const c of part.value) {
+									var span = document.createElement('span');
+									span.style.color = color;
+									span.appendChild(document.createTextNode(c));
+									output2.appendChild(span);
+								}
 							}
+						});
+
+						// Compare characters from output1 and output2 and modify outputs accordingly
+						var span1 = output1.querySelectorAll('span');
+						var span2 = output2.querySelectorAll('span');
+						var counter1 = 0;
+						var counter2 = 0;
+						while (counter1 < span1.length && counter2 < span2.length) {
+							var char1 = span1[counter1].textContent;
+							var char2 = span2[counter2].textContent;
+							if (char1 === char2) {
+								// Characters are the same
+								o3+=char1;
+								o4+='.';
+								counter1++;
+								counter2++;
+
+							} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color === 'red') {
+								// Both characters are red
+								o3+=char1;
+								o4+=char2;
+								counter1++;
+								counter2++;
+							} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color != 'red') {
+								o3+=char1;
+								o4+='-';
+								counter1++;
+							} else if (span1[counter1].style.color != 'red' && span2[counter2].style.color === 'red') {
+								o3+='-';
+								o4+=char2;
+								counter2++;
+							}
+							else {
+								counter1++;
+								counter2++;
+							}
+						}
+
+
+
+						// Create tables for each 50 characters
+						var c1 = 0;
+						var c2 = 0;
+						var c3 = 1;
+						var c4 = 1;
+						var i1 = 0;
+						var i2 = 0;
+						for (let i = 0; i < Math.max(content1.length, content2.length); i += 50) {
+							const table = document.createElement('table');
+							const tr1 = document.createElement('tr');
+							const tr2 = document.createElement('tr');
+							const tr3 = document.createElement('tr');
+
+							// Populate rows
+							const f1 = document.createElement('td');
+							const f2 = document.createElement('td');
+							const f3 = document.createElement('td');
+							f2.textContent = n1.textContent;
+							f3.textContent = n2.textContent;
+
+							tr1.appendChild(f1);
+							tr2.appendChild(f2);
+							tr3.appendChild(f3);
 							
-                            tr1.appendChild(td1);
-                            tr2.appendChild(td2);
-                            tr3.appendChild(td3);
-                        }
+							for (let j = i; j < i + 50; j++) {
+								//Checks for end of sequence
+								if (j > o3.length || j > o4.length) { break; }
+								
+								const td1 = document.createElement('td');
+								const td2 = document.createElement('td');
+								const td3 = document.createElement('td');
 
-                        // Append rows to table
-                        table.appendChild(tr1);
-                        table.appendChild(tr2);
-                        table.appendChild(tr3);
+								td1.textContent = j + 1;
+								td2.textContent = o3[j];
+								
+								if (dtype1[i1] === "Extracellular") {
+									td2.style.backgroundColor = "#ADD8E6";
+								}
+								else if (dtype1[i1].substring(0,7) === "Helical") {
+									td2.style.backgroundColor = "#FF7F7F";
+								}
+								else if (dtype1[i1] === "Cytoplasmic") {
+									td2.style.backgroundColor = "#90EE90";
+								}
+								
+								if (c3 > dend1[i1]) { i1++; }
+								
+								if (o3[j] != '-') {
+									c1++;
+									c3++;
+								}
+								if (c1 === 50) {
+									td2.style.textDecoration = "underline";
+									c1 = 0;
+								}
+								
+								if (dtype2[i2] === "Extracellular") {
+									td3.style.backgroundColor = "#ADD8E6";
+								}
+								
+								else if (dtype2[i2].substring(0,7) === "Helical") {
+									td3.style.backgroundColor = "#FF7F7F";
+								}
+								else if (dtype2[i2] === "Cytoplasmic") {
+									td3.style.backgroundColor = "#90EE90";
+								}
+								if (c4 > dend2[i2]) { i2++; }
+								
+								td3.textContent = o4[j];
+								if (o4[j] != '-') {
+									c2++;
+									c4++;
+								} 
+								if (c2 === 50) {
+									td3.style.textDecoration = "underline";
+									c2 = 0;
+								}
+								
+								tr1.appendChild(td1);
+								tr2.appendChild(td2);
+								tr3.appendChild(td3);
+							}
 
-                        // Append table to container
-                        tableContainer.appendChild(table);
-                    }
-                };
+							// Append rows to table
+							table.appendChild(tr1);
+							table.appendChild(tr2);
+							table.appendChild(tr3);
 
-                reader2.readAsText(file2);
-            };
+							// Append table to container
+							tableContainer.appendChild(table);
+						}
+					};
 
-            reader1.readAsText(file1);
-        }
+					reader2.readAsText(file2);
+				};
+
+				reader1.readAsText(file1);
+
+            } else {
+                // Display an error message if XML content could not be fetched
+
+            }
+        });
     </script>
 </body>
 </html>
