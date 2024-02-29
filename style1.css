@@ -1,0 +1,22 @@
+table {
+	border-collapse: collapse;
+	margin-bottom: 20px;
+}
+th, td {
+	border: 1px solid black;
+	padding: 4px;
+	max-width: 500px; /* Adjust this value as needed */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: center;
+}
+th:first-child,
+td:first-child {
+  font-size: 13px
+}
+@media print {
+  .noPrint {
+      display:none;
+  }
+}
