@@ -13,10 +13,18 @@ th, td {
 }
 th:first-child,
 td:first-child {
-  font-size: 13px
+	font-size: 13px
 }
+
+.button-wrapper {text-align:left;display:inline-block; margin:10px;}
 @media print {
-  .noPrint {
-      display:none;
+  body {
+    visibility: hidden;
+  }
+  #tableContainer {
+    visibility: visible;
+    position: absolute;
+    left: 0;
+    top: 0;
   }
 }
