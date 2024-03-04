@@ -41,8 +41,8 @@
 	<!-- Outputs -->
 	<div id = "outputs">
 		<div id="tableContainer"></div>
-		<div hidden id="output1"></div>
-		<div hidden id="output2"></div>
+		<div id="output1"></div>
+		<div id="output2"></div>
 	</div>
 	
 	<script src="diff.js"></script>
@@ -76,7 +76,6 @@
 		function difference (sequence1, sequence2) {
 			var result = [];
 			var diff1 = Diff["diffChars"](sequence1, sequence2);
-			var diff2 = Diff["diffChars"](sequence2, sequence1);
 			var output1 = document.getElementById("output1");
 			output1.innerHTML = "";
 
@@ -99,10 +98,10 @@
 				}
 			});
 
-			diff2.forEach(function(part) {
+			diff1.forEach(function(part) {
 				var color = part.added ? 'green' :
 							part.removed ? 'red' : 'black';
-				if (!part.added) {
+				if (!part.removed) {
 					for (const c of part.value) {
 						var span = document.createElement('span');
 						span.style.color = color;
@@ -127,17 +126,17 @@
 					counter1++;
 					counter2++;
 
-				} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color === 'red') {
+				} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color === 'green') {
 					// Both characters are red
 					o3+=char1;
 					o4+=char2;
 					counter1++;
 					counter2++;
-				} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color != 'red') {
+				} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color != 'green') {
 					o3+=char1;
 					o4+='-';
 					counter1++;
-				} else if (span1[counter1].style.color != 'red' && span2[counter2].style.color === 'red') {
+				} else if (span1[counter1].style.color != 'red' && span2[counter2].style.color === 'green') {
 					o3+='-';
 					o4+=char2;
 					counter2++;
