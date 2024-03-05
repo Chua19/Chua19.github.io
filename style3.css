@@ -2,7 +2,10 @@ table {
 	border-collapse: collapse;
 	margin-bottom: 20px;
 	table-layout: fixed;
+	position: relative;
+	page-break-inside: avoid;
 }
+
 th, td {
 	border: 1px solid black;
 	padding: 4px;
@@ -17,6 +20,9 @@ th:first-child,
 td:first-child {
 	font-size: 13px
 }
+.file-upload-container {
+	margin-bottom: 10px;
+}
 
 .button-wrapper {text-align:left;display:inline-block; margin:10px;}
 @media print {
@@ -28,5 +34,8 @@ td:first-child {
     position: absolute;
     left: 0;
     top: 0;
+	
   }
+
+  
 }
