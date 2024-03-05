@@ -23,7 +23,7 @@
 	
 	<!-- Buttons -->
 	<div id = "buttons">
-		<!-- <button id="switchInput">Switch Inputs</button> -->
+		<button id="switchInput">Switch Inputs</button>
 		<button id="viewButton">Run Script</button>
 		<button onClick="window.print()">Print this page</button>
 	</div>
@@ -52,15 +52,15 @@
         }
 		
 		//Switch Inputs
-		/*document.getElementById("switchInput").addEventListener("click", async function() {
+		document.getElementById("switchInput").addEventListener("click", async function() {
 			const div = document.getElementById("inputs");
-			const i = document.getElementById("Input1");
+			const i = document.getElementById("ref");
 			if (i.type == "file") {
-				div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence 1</h3><input type="text" id="Input1"></div><div class="button-wrapper"><h3>Submit Sequence 2</h3><input type="text" id="Input2"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit CSV 2</h3><input type="file" id="csv2" accept=".csv"></div>';
+				div.innerHTML = '<div class="button-wrapper"><h3>Submit Reference Sequence</h3><input type="text" id="ref"></div><div class="button-wrapper"><h3>Submit Child Sequences, Separated by Commas</h3><input type="text" id="children"></div>';
 			} else {
-				div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence 1</h3><input type="file" id="Input1" accept=".txt"></div><div class="button-wrapper"><h3>Submit Sequence 2</h3><input type="file" id="Input2" accept=".txt"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit CSV 2</h3><input type="file" id="csv2" accept=".csv"></div>'
+				div.innerHTML = '<div class="button-wrapper"><h3>Submit Reference Sequence</h3><input type="file" id="ref" accept=".txt"></div><div class="button-wrapper"><h3>Submit Child Sequences</h3><input type="file" id="children" accept=".txt" multiple></div>';
 			}
-		});*/
+		});
 		
 		//Compare two sequences
 		function difference (refSequence, childSequence) {
@@ -245,64 +245,40 @@
 		//Run Script
         document.getElementById("viewButton").addEventListener("click", async function() {
 			const ref = document.getElementById("ref");
-			const childs = document.getElementById("children").files;
-		
-
-			const promises = [];
+			let ch = document.getElementById("children");
 			
-			//Retrieve XML data from database
-			//Change back to Inputs.length when going to multiple file uploads
-			for (let i = 0; i < childs.length; i++) {
-				const file = childs[i];
-				const reader = new FileReader();
-				promises.push(
-					new Promise((resolve, reject) => {
-						reader.onload = function(event) {
-							const fileContent = event.target.result;
-							var firstLine = fileContent.slice(0, fileContent.indexOf("\n"));
-							var id = firstLine.substring(4, 10);
+			if (ref.files == null) {
+				childs = ch.value.split(',');
+				const promises = [];
+				
+				//Retrieve XML data from database
+				for (let i = 0; i < childs.length; i++) {
+					const id = childs[i];
+					promises.push(
+						new Promise((resolve, reject) => {
 							const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
 							resolve(getXMLContent(url));
-						};
-						reader.readAsText(file);
-					})
-				);
-			}
-			
-			xmlContent = await Promise.all(promises);
-			
-			const promises1 = [];
-			
-			//Retrieve XML data from database
-			//Change back to Inputs.length when going to multiple file uploads
-			const file = ref.files[0];
-			const reader2 = new FileReader();
-			promises1.push(
-				new Promise((resolve, reject) => {
-					reader2.onload = function(event) {
-						const fileContent = event.target.result;
-						var firstLine = fileContent.slice(0, fileContent.indexOf("\n"));
-						var id = firstLine.substring(4, 10);
+						})
+					);
+				}
+				
+				xmlContent = await Promise.all(promises);
+				
+				const promises1 = [];
+				let id = ref.value;
+				//Retrieve XML data from database
+				promises1.push(
+					new Promise((resolve, reject) => {
 						const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
 						resolve(getXMLContent(url));
-					};
-					reader2.readAsText(file);
-				})
-			);
-			
-			refContent = await Promise.all(promises1);
-			
-			//const dom = getDOM(xmlContent[i]);
-			const reffile = ref.files[0];
-			const reader = new FileReader();
-			reader.onload = function() {
-				let refstring = reader.result;
-				refstring = refstring.substring(refstring.indexOf('\n') + 1);
-				refstring = refstring.trim();
-				refstring = refstring.replace(/[\n\r\s]+/g, '');
+					})
+				);
+				
+				refContent = await Promise.all(promises1);
+				
+				//const dom = getDOM(xmlContent[i]);
 				
 				input = [];
-				sequences = [];
 				names = [];
 				dtype = [];
 				dend = [];
@@ -310,42 +286,123 @@
 				names.push(dom[0]);
 				dtype.push(dom[1]);
 				dend.push(dom[2]);
-				
-				let r = refstring
+				let r = dom[3];
 				for (let i = 0; i < childs.length; i++) {
 					const dom = getDOM(xmlContent[i]);
 					names.push(dom[0]);
 					dtype.push(dom[1]);
 					dend.push(dom[2]);
-					
-					const file = childs[i];
-					const creader = new FileReader();
-					creader.onload = function() {
-						let content = creader.result;
-						content = content.substring(content.indexOf('\n') + 1);
-						content = content.trim();
-						content = content.replace(/[\n\r\s]+/g, '');
-						input.push(content);
-						result = difference(r, content, i);
-						r = result[0];
-						if (i == childs.length - 1) {
-							let finalresult = [];
-							finalresult.push(r);
-							for (let j = 0; j < input.length; j++) {
-								finalresult.push(difference(r, input[j])[1]);
-							}
-							populateTable(finalresult, names, dtype, dend);
+					input.push(dom[3]);
+					result = difference(r, dom[3], i);
+					r = result[0];
+					if (i == childs.length - 1) {
+						let finalresult = [];
+						finalresult.push(r);
+						for (let j = 0; j < input.length; j++) {
+							finalresult.push(difference(r, input[j])[1]);
 						}
-						
-					};
-					
-					creader.readAsText(file);
+						populateTable(finalresult, names, dtype, dend);
+					}
 				}
-			};
-			reader.readAsText(reffile);
+			} else {
+				childs = ch.files
+				const promises = [];
+				
+				//Retrieve XML data from database
+				//Change back to Inputs.length when going to multiple file uploads
+				for (let i = 0; i < childs.length; i++) {
+					const file = childs[i];
+					const reader = new FileReader();
+					promises.push(
+						new Promise((resolve, reject) => {
+							reader.onload = function(event) {
+								const fileContent = event.target.result;
+								var firstLine = fileContent.slice(0, fileContent.indexOf("\n"));
+								var id = firstLine.substring(4, 10);
+								const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
+								resolve(getXMLContent(url));
+							};
+							reader.readAsText(file);
+						})
+					);
+				}
+				
+				xmlContent = await Promise.all(promises);
+				
+				const promises1 = [];
+				
+				//Retrieve XML data from database
+				//Change back to Inputs.length when going to multiple file uploads
+				const file = ref.files[0];
+				const reader2 = new FileReader();
+				promises1.push(
+					new Promise((resolve, reject) => {
+						reader2.onload = function(event) {
+							const fileContent = event.target.result;
+							var firstLine = fileContent.slice(0, fileContent.indexOf("\n"));
+							var id = firstLine.substring(4, 10);
+							const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
+							resolve(getXMLContent(url));
+						};
+						reader2.readAsText(file);
+					})
+				);
+				
+				refContent = await Promise.all(promises1);
+				
+				//const dom = getDOM(xmlContent[i]);
+				const reffile = ref.files[0];
+				const reader = new FileReader();
+				reader.onload = function() {
+					let refstring = reader.result;
+					refstring = refstring.substring(refstring.indexOf('\n') + 1);
+					refstring = refstring.trim();
+					refstring = refstring.replace(/[\n\r\s]+/g, '');
+					
+					input = [];
+					names = [];
+					dtype = [];
+					dend = [];
+					const dom = getDOM(refContent[0]);
+					names.push(dom[0]);
+					dtype.push(dom[1]);
+					dend.push(dom[2]);
+					
+					let r = refstring
+					for (let i = 0; i < childs.length; i++) {
+						const dom = getDOM(xmlContent[i]);
+						names.push(dom[0]);
+						dtype.push(dom[1]);
+						dend.push(dom[2]);
+						
+						const file = childs[i];
+						const creader = new FileReader();
+						creader.onload = function() {
+							let content = creader.result;
+							content = content.substring(content.indexOf('\n') + 1);
+							content = content.trim();
+							content = content.replace(/[\n\r\s]+/g, '');
+							input.push(content);
+							result = difference(r, content, i);
+							r = result[0];
+							if (i == childs.length - 1) {
+								let finalresult = [];
+								finalresult.push(r);
+								for (let j = 0; j < input.length; j++) {
+									finalresult.push(difference(r, input[j])[1]);
+								}
+								populateTable(finalresult, names, dtype, dend);
+							}
+							
+						};
+						
+						creader.readAsText(file);
+					}
+				};
+				reader.readAsText(reffile);
 
-
-        });
+			}
+		});
     </script>
 </body>
 </html>
