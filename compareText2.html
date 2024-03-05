@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence Alignment</title>
+	<link rel=stylesheet href=style3.css>
+
+</head>
+<body>
+
+	<!-- Inputs -->
+	<div id="inputs">
+		<div class="button-wrapper">
+			<h3>Submit Reference Sequence</h3>
+			<input type="file" id="ref" accept=".txt">
+		</div>
+		<div class="button-wrapper">
+			<h3>Submit Child Sequences</h3>
+			<input type="file" id="children" accept=".txt" multiple>
+		</div>
+	</div>
+	
+	<!-- Buttons -->
+	<div id = "buttons">
+		<!-- <button id="switchInput">Switch Inputs</button> -->
+		<button id="viewButton">Run Script</button>
+		<button onClick="window.print()">Print this page</button>
+	</div>
+
+	<!-- Outputs -->
+	<div id = "outputs">
+		<div id="tableContainer"></div>
+		<div hidden id="output1"></div>
+		<div hidden id="output2"></div>
+	</div>
+	
+	<script src="diff.js"></script>
+    <script>
+		//Retrieve XML Content
+        async function getXMLContent(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch XML file. Status code: ${response.status}`);
+                }
+                return await response.text(); // You can use response.text() for XML content
+            } catch (error) {
+                console.error("Error fetching XML file:", error);
+                return null;
+            }
+        }
+		
+		//Switch Inputs
+		/*document.getElementById("switchInput").addEventListener("click", async function() {
+			const div = document.getElementById("inputs");
+			const i = document.getElementById("Input1");
+			if (i.type == "file") {
+				div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence 1</h3><input type="text" id="Input1"></div><div class="button-wrapper"><h3>Submit Sequence 2</h3><input type="text" id="Input2"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit CSV 2</h3><input type="file" id="csv2" accept=".csv"></div>';
+			} else {
+				div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence 1</h3><input type="file" id="Input1" accept=".txt"></div><div class="button-wrapper"><h3>Submit Sequence 2</h3><input type="file" id="Input2" accept=".txt"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit CSV 2</h3><input type="file" id="csv2" accept=".csv"></div>'
+			}
+		});*/
+		
+		//Compare two sequences
+		function difference (refSequence, childSequence) {
+			
+			var diff = Diff["diffChars"](refSequence, childSequence);
+			
+			var output1 = document.getElementById("output1");
+			output1.innerHTML = "";
+
+			var output2 = document.getElementById("output2");
+			output2.innerHTML = "";
+			
+			diff.forEach(function(part) {
+				var color = part.added ? 'green' :
+							part.removed ? 'red' : 'black';
+				if (!part.added) {
+					for (const c of part.value) {
+						var span = document.createElement('span');
+						span.style.color = color;
+						span.appendChild(document.createTextNode(c));
+						output1.appendChild(span);
+					}
+				}
+				if (!part.removed) {
+					for (const c of part.value) {
+						var span = document.createElement('span');
+						span.style.color = color;
+						span.appendChild(document.createTextNode(c));
+						output2.appendChild(span);
+					}
+				}
+			});
+			
+			// Compare characters from output1 and output2 and modify outputs accordingly
+			var span1 = output1.querySelectorAll('span');
+			var span2 = output2.querySelectorAll('span');
+			var counter1 = 0;
+			var counter2 = 0;
+			var o3 = "";
+			var o4 = "";
+			while (counter1 < span1.length && counter2 < span2.length) {
+				var char1 = span1[counter1].textContent;
+				var char2 = span2[counter2].textContent;
+				if (char1 === char2) {
+					// Characters are the same
+					o3+=char1;
+					o4+='.';
+					counter1++;
+					counter2++;
+
+				} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color === 'green') {
+					// Both characters are red
+					o3+=char1;
+					o4+=char2;
+					counter1++;
+					counter2++;
+				} else if (span1[counter1].style.color === 'red' && span2[counter2].style.color != 'green') {
+					o3+=char1;
+					o4+='-';
+					counter1++;
+				} else if (span1[counter1].style.color != 'red' && span2[counter2].style.color === 'green') {
+					o3+='-';
+					o4+=char2;
+					counter2++;
+				}
+				else {
+					counter1++;
+					counter2++;
+				}
+			}
+			result = [];
+			result.push(o3);
+			result.push(o4);
+			return result;
+		}
+		
+		//Get Information from DOM (outputs array with [Name, dtype, dend, sequence]
+		function getDOM (xmlContent) {
+			result = [];
+			
+			//DOM Parser
+			var parser = new DOMParser();  
+			doc = parser.parseFromString(xmlContent, 'text/xml');
+
+			//Name
+			var x = doc.getElementsByTagName("name"); 
+			let name = x[0].firstChild;
+			result.push(name);
+			
+			//Domain Information
+			var y = doc.getElementsByTagName("feature");
+			
+			var dtype = []
+			var dend = []
+			for (i = 1; i < y.length; i++) {
+				if (y[i].attributes.type.value != "topological domain" && y[i].attributes.type.value != "transmembrane region") { break; }
+				dtype.push(y[i].attributes.description.value);
+				dend.push(y[i].childNodes[1].childNodes[3].attributes.position.value);
+			}
+			result.push(dtype);
+			result.push(dend);
+			
+			var x = doc.getElementsByTagName("sequence");
+			var sequence = x[x.length - 1].firstChild.nodeValue;
+			result.push(sequence);
+					
+			return result;
+		}
+		
+		//Populate Table with results (multiple files)
+		function populateTable(finalresult, names, dtype, dend) {
+			const tableContainer = document.getElementById('tableContainer');
+			tableContainer.innerHTML = ''; // Clear previous tables if exist
+			// Create tables for each 50 characters
+			ccount = [];
+			icount = [];
+			for (let a = 0; a < finalresult.length; a++) {
+				ccount.push(0);
+				icount.push(0);
+			}
+			
+			for (let i = 0; i < finalresult[0].length; i += 25) {
+				const table = document.createElement('table');
+				let tr = document.createElement('tr');
+				let td = document.createElement('td');
+				tr.appendChild(td);
+				for (let j = i; j < i + 25; j++) {
+					if (j >= finalresult[0].length) { break; }
+					const td = document.createElement('td');
+					td.textContent = j + 1;
+					tr.appendChild(td);
+				}
+				
+				table.appendChild(tr);
+				
+				for (let x = 0; x < finalresult.length; x++) {
+					let fr = finalresult[x];
+					
+					let tr = document.createElement('tr');
+					let dtype1 = dtype[x];
+					let dend1 = dend[x];
+					
+					let n = names[x];
+					let td = document.createElement('td');
+					td.textContent = n.textContent;
+					tr.appendChild(td);
+					
+					for (let j = i; j < i + 25; j++) {
+						//Checks for end of sequence
+						if (j >= finalresult[0].length) { break; }
+						const td = document.createElement('td');
+						td.textContent = fr[j];
+						
+						if (dtype1[icount[x]] === "Extracellular") {
+							td.style.backgroundColor = "#ADD8E6";
+						}
+						else if (dtype1[icount[x]].substring(0,7) === "Helical") {
+							td.style.backgroundColor = "#FF7F7F";
+						}
+						else if (dtype1[icount[x]] === "Cytoplasmic") {
+							td.style.backgroundColor = "#90EE90";
+						}
+						
+						if (ccount[x] > dend1[icount[x]]) { icount[x]++; }
+						
+						if (fr[j] != '-') {
+							ccount[x]++;
+						}
+						if (ccount[x] % 50 == 0 && fr[j] != '-') {
+							td.style.textDecoration = "underline";
+						}
+						
+						tr.appendChild(td);
+					}
+					table.appendChild(tr);
+				}
+				tableContainer.appendChild(table);
+			}
+		}
+		
+		
+		//Run Script
+        document.getElementById("viewButton").addEventListener("click", async function() {
+			const ref = document.getElementById("ref");
+			const childs = document.getElementById("children").files;
+		
+
+			const promises = [];
+			
+			//Retrieve XML data from database
+			//Change back to Inputs.length when going to multiple file uploads
+			for (let i = 0; i < childs.length; i++) {
+				const file = childs[i];
+				const reader = new FileReader();
+				promises.push(
+					new Promise((resolve, reject) => {
+						reader.onload = function(event) {
+							const fileContent = event.target.result;
+							var firstLine = fileContent.slice(0, fileContent.indexOf("\n"));
+							var id = firstLine.substring(4, 10);
+							const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
+							resolve(getXMLContent(url));
+						};
+						reader.readAsText(file);
+					})
+				);
+			}
+			
+			xmlContent = await Promise.all(promises);
+			
+			const promises1 = [];
+			
+			//Retrieve XML data from database
+			//Change back to Inputs.length when going to multiple file uploads
+			const file = ref.files[0];
+			const reader2 = new FileReader();
+			promises1.push(
+				new Promise((resolve, reject) => {
+					reader2.onload = function(event) {
+						const fileContent = event.target.result;
+						var firstLine = fileContent.slice(0, fileContent.indexOf("\n"));
+						var id = firstLine.substring(4, 10);
+						const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
+						resolve(getXMLContent(url));
+					};
+					reader2.readAsText(file);
+				})
+			);
+			
+			refContent = await Promise.all(promises1);
+			
+			//const dom = getDOM(xmlContent[i]);
+			const reffile = ref.files[0];
+			const reader = new FileReader();
+			reader.onload = function() {
+				let refstring = reader.result;
+				refstring = refstring.substring(refstring.indexOf('\n') + 1);
+				refstring = refstring.trim();
+				refstring = refstring.replace(/[\n\r\s]+/g, '');
+				
+				input = [];
+				sequences = [];
+				names = [];
+				dtype = [];
+				dend = [];
+				const dom = getDOM(refContent[0]);
+				names.push(dom[0]);
+				dtype.push(dom[1]);
+				dend.push(dom[2]);
+				
+				let r = refstring
+				for (let i = 0; i < childs.length; i++) {
+					const dom = getDOM(xmlContent[i]);
+					names.push(dom[0]);
+					dtype.push(dom[1]);
+					dend.push(dom[2]);
+					
+					const file = childs[i];
+					const creader = new FileReader();
+					creader.onload = function() {
+						let content = creader.result;
+						content = content.substring(content.indexOf('\n') + 1);
+						content = content.trim();
+						content = content.replace(/[\n\r\s]+/g, '');
+						input.push(content);
+						result = difference(r, content, i);
+						r = result[0];
+						if (i == childs.length - 1) {
+							let finalresult = [];
+							finalresult.push(r);
+							for (let j = 0; j < input.length; j++) {
+								finalresult.push(difference(r, input[j])[1]);
+							}
+							populateTable(finalresult, names, dtype, dend);
+						}
+						
+					};
+					
+					creader.readAsText(file);
+				}
+			};
+			reader.readAsText(reffile);
+
+
+        });
+    </script>
+</body>
+</html>
