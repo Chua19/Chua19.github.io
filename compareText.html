@@ -37,7 +37,7 @@
 		<button id="viewButton1">Run Script</button>
 		<button onClick="window.print()">Print this page</button>
 	</div>
-	
+	<br />
 	<div><a href="http://tools.iedb.org/bcell/">http://tools.iedb.org/bcell/</a></div>
 	
 	<!-- Outputs -->
@@ -56,10 +56,10 @@
 <div class="page" id="page2">
     <div id="inputs2">
 		<div class="button-wrapper" id="upload-container">
+			<h3>Reference CSV</h3>
+			<input type="file" id="csv" accept=".csv">
+			<h3>Sequences</h3>
 			<div class="file-upload-container">
-				<h3>Reference CSV</h3>
-				<input type="file" id="csv" accept=".csv">
-				<h3>Sequences</h3>
 				<input type="file" name="file-upload" class="upload-input" accept=".txt">
 				<button onclick="toggleInput(this)">Toggle Input</button>
 			</div>
@@ -330,10 +330,10 @@
 			const f5 = document.createElement('td');
 			const f6 = document.createElement('td');
 			f2.textContent = "Sample 1";
-			f3.textContent = "Sample 1 B Cell Scores";
-			f4.textContent = "Mouse MHC II H2-IAb";
-			f5.textContent = "Mouse MHC II H2-IAd";
-			f6.textContent = "Mouse MHC II H2-IAk";
+			f3.textContent = "B Cell Scores";
+			f4.textContent = "Mouse MHCII H2-IAb";
+			f5.textContent = "Mouse MHCII H2-IAd";
+			f6.textContent = "Mouse MHCII H2-IAk";
 
 			tr1.appendChild(f1);
 			tr2.appendChild(f2);
