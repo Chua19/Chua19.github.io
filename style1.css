@@ -34,10 +34,19 @@ table {
 	position: relative;
 	page-break-inside: avoid;
 }
+tr:nth-child(4) {
+  font-size: 14px;
+}
+tr:nth-child(5) {
+  font-size: 14px;
+}
+tr:nth-child(6) {
+  font-size: 14px;
+}
 th, td {
 	border: 1px solid black;
 	padding: 4px;
-	max-width: 500px; /* Adjust this value as needed */
+	/* max-width: 500px;  Adjust this value as needed */
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -74,6 +83,9 @@ td:first-child {
   background-color: #FADA5E; 
   padding: 1rem 1rem;
   float: left;
+}
+.file-upload-container {
+	padding: 0.5rem 0.5rem;
 }
 
 .button-wrapper {text-align:left;display:inline-block; margin:10px;}
