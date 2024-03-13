@@ -84,6 +84,7 @@
 		<div hidden id="output2"></div>
 	</div>
 </div>
+
 <script src="diff.js"></script>
 <script>
 	//Switch between both pages
@@ -450,8 +451,10 @@
 			const reader = new FileReader();
 			promises.push(
 				new Promise((resolve, reject) => {
-						const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
-						resolve(getXMLContent(url));
+					const div = document.getElementById("i");
+					div.innerHTML = id;
+					const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
+					resolve(getXMLContent(url));
 				})
 			);
 			xmlContent = await Promise.all(promises);
@@ -459,17 +462,23 @@
 			if (xmlContent1) {
 
 				let dom = getDOM(xmlContent1);
-				
 				const file3 = Inputs[1].files[0];
+				const file5 = Inputs[2].files[0];
 
 				const reader3 = new FileReader();
 					reader3.onload = function() {
 						let content3 = reader3.result;
-						
 						const rows3 = content3.split("\n");
-						var o3 = dom[3];
 						
-						populateSmallTable(o3, dom[0], dom[1], dom[2], rows3); 
+						const reader5 = new FileReader();
+						reader5.onload = function() {
+							let content5 = reader5.result;
+							
+							const rows5 = content5.split("\n");
+							var o3 = dom[3];
+							populateSmallTable(o3, dom[0], dom[1], dom[2], rows3, rows5); 
+						};
+						reader5.readAsText(file5);
 						
 					};
 				reader3.readAsText(file3);
@@ -483,7 +492,6 @@
 			const promises = [];
 			
 			//Retrieve XML data from database
-			//Change back to Inputs.length when going to multiple file uploads
 			const fileInput = Inputs[0];
 			const file = fileInput.files[0];
 			const reader = new FileReader();
@@ -698,6 +706,7 @@
 					new Promise((resolve, reject) => {
 						var id = input.value;
 						const url = ("https://rest.uniprot.org/uniprotkb/").concat(id, ".xml");
+						ids.push(id);
 						resolve(getXMLContent(url));
 					})
 				);
