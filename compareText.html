@@ -230,6 +230,19 @@
 				counter2++;
 			}
 		}
+		if (span1.length > span2.length) { 
+			for (let i = counter1; i < span1.length; i++) {
+				var char1 = span1[i].textContent;
+				o3+=char1;
+				o4+='-';
+			}
+		} else if (span2.length > span1.length) {
+			for (let i = counter2; i < span2.length; i++) {
+				var char2 = span2[i].textContent;
+				o3+='-';
+				o4+=char2;
+			}
+		}
 		result = [];
 		result.push(o3);
 		result.push(o4);
@@ -254,9 +267,11 @@
 		
 		var dtype = []
 		var dend = []
+		var dstart = []
 		for (i = 1; i < y.length; i++) {
-			if (y[i].attributes.type.value != "topological domain" && y[i].attributes.type.value != "transmembrane region") { break; }
+			if (y[i].attributes.type.value != "topological domain" && y[i].attributes.type.value != "transmembrane region") { continue; }
 			dtype.push(y[i].attributes.description.value);
+			dstart.push(y[i].childNodes[1].childNodes[1].attributes.position.value);
 			dend.push(y[i].childNodes[1].childNodes[3].attributes.position.value);
 		}
 		result.push(dtype);
@@ -265,7 +280,7 @@
 		var x = doc.getElementsByTagName("sequence");
 		var sequence = x[x.length - 1].firstChild.nodeValue;
 		result.push(sequence);
-				
+		result.push(dstart);
 		return result;
 	}
 	
@@ -279,27 +294,29 @@
 	}
 	
 	//Populate Table with results (one file)
-	function populateSmallTable(o3, n1, dtype1, dend1, rows3, rows5) {
+	function populateSmallTable(o3, n1, dtype1, dend1, dstart1, rows3, rows5) {
 		//Format Second CSV to only contain information we need (top 10% ranked)
 		let k = [];
 		let b = [];
 		let d = [];
-		for (let i = 0; i < rows5.length; i++) {
-			let row1 = rows5[i];
-			let columns1 = row1.split(",");
-			if (columns1[8] > 10) {
-				break;
-			} else {
-				let ans = [];
-				ans.push(columns1[2]);
-				ans.push(columns1[3]);
-				ans.push(columns1[7]);
-				if (columns1[0] == "H2-IAk") {
-					k.push(ans);
-				} else if (columns1[0] == "H2-IAb") {
-					b.push(ans);
-				} else if (columns1[0] == "H2-IAd") {
-					d.push(ans);
+		if (rows5 != undefined) {
+			for (let i = 0; i < rows5.length; i++) {
+				let row1 = rows5[i];
+				let columns1 = row1.split(",");
+				if (columns1[8] > 10) {
+					break;
+				} else {
+					let ans = [];
+					ans.push(columns1[2]);
+					ans.push(columns1[3]);
+					ans.push(columns1[7]);
+					if (columns1[0] == "H2-IAk") {
+						k.push(ans);
+					} else if (columns1[0] == "H2-IAb") {
+						b.push(ans);
+					} else if (columns1[0] == "H2-IAd") {
+						d.push(ans);
+					}
 				}
 			}
 		}
@@ -310,7 +327,6 @@
 		tableContainer.innerHTML = ''; // Clear previous tables if exist
 
 		// Create tables for each 50 characters
-		var c1 = 0;
 		var c3 = 1;
 		var i1 = 0;
 		for (let i = 0; i < o3.length; i += 25) {
@@ -357,64 +373,57 @@
 				td1.textContent = j + 1;
 				td2.textContent = o3[j];
 				
-				if (dtype1[i1] === "Extracellular") {
-					td2.style.backgroundColor = "#ADD8E6";
-				}
-				else if (dtype1[i1].substring(0,7) === "Helical") {
-					td2.style.backgroundColor = "#FF7F7F";
-				}
-				else if (dtype1[i1] === "Cytoplasmic") {
-					td2.style.backgroundColor = "#90EE90";
+				if (dtype1[i1] != undefined && c3 >= dstart1[i1]) {
+					if (dtype1[i1] === "Extracellular") {
+						td2.style.backgroundColor = "#ADD8E6";
+					}
+					else if (dtype1[i1].substring(0,7) === "Helical") {
+						td2.style.backgroundColor = "#FF7F7F";
+					}
+					else if (dtype1[i1] === "Cytoplasmic") {
+						td2.style.backgroundColor = "#90EE90";
+					}
 				}
 				
-				if (c3 > dend1[i1]) { i1++; }
+				if (c3 >= dend1[i1]) { i1++; }
 				
-				if (o3[j] != '-') {
-					c1++;
-					let row1 = rows3[c3];
-					const columns1 = row1.split(",");
-					td3.textContent = columns1[2];
-					threshold1 = columns1[3];
-					if (threshold1 != undefined) {
-						threshold1 = threshold1.replace(/[\r\n]+/gm, "");
-					}
-					if (threshold1 == "E") { td3.style.backgroundColor = "#FADA5E"; }
-					
-					for (let y = 0; y < b.length; y++) {
-						let start = b[y][0];
-						let end = b[y][1];
-						let score = b[y][2];
-						if (c3 >= start && c3 <= end) {
-							td4.textContent = score;
-						}
-					}
-					
-					for (let y = 0; y < d.length; y++) {
-						let start = d[y][0];
-						let end = d[y][1];
-						let score = d[y][2];
-						if (c3 >= start && c3 <= end) {
-							td5.textContent = score;
-						}
-					}
-					
-					for (let y = 0; y < k.length; y++) {
-						let start = k[y][0];
-						let end = k[y][1];
-						let score = k[y][2];
-						if (c3 >= start && c3 <= end) {
-							td6.textContent = score;
-						}
-					}
-					
-					c3++;
-				} else {
-					td3.textContent = "-";
+				let row1 = rows3[c3];
+				const columns1 = row1.split(",");
+				td3.textContent = columns1[2];
+				threshold1 = columns1[3];
+				if (threshold1 != undefined) {
+					threshold1 = threshold1.replace(/[\r\n]+/gm, "");
 				}
-				if (c1 === 50) {
-					td2.style.textDecoration = "underline";
-					c1 = 0;
+				if (threshold1 == "E") { td3.style.backgroundColor = "#FADA5E"; }
+				
+				for (let y = 0; y < b.length; y++) {
+					let start = b[y][0];
+					let end = b[y][1];
+					let score = b[y][2];
+					if (c3 >= start && c3 <= end) {
+						td4.textContent = score;
+					}
 				}
+				
+				for (let y = 0; y < d.length; y++) {
+					let start = d[y][0];
+					let end = d[y][1];
+					let score = d[y][2];
+					if (c3 >= start && c3 <= end) {
+						td5.textContent = score;
+					}
+				}
+				
+				for (let y = 0; y < k.length; y++) {
+					let start = k[y][0];
+					let end = k[y][1];
+					let score = k[y][2];
+					if (c3 >= start && c3 <= end) {
+						td6.textContent = score;
+					}
+				}
+				
+				c3++;
 						
 				tr1.appendChild(td1);
 				tr2.appendChild(td2);
@@ -446,7 +455,6 @@
 		//If the input is text
 		if (Inputs[0].files == null) {
 			const promises = [];
-			//Change back to fileInputs.length when going to multiple file uploads
 			const id = Inputs[0].value;
 			const reader = new FileReader();
 			promises.push(
@@ -464,7 +472,7 @@
 				let dom = getDOM(xmlContent1);
 				const file3 = Inputs[1].files[0];
 				const file5 = Inputs[2].files[0];
-
+				
 				const reader3 = new FileReader();
 					reader3.onload = function() {
 						let content3 = reader3.result;
@@ -476,7 +484,7 @@
 							
 							const rows5 = content5.split("\n");
 							var o3 = dom[3];
-							populateSmallTable(o3, dom[0], dom[1], dom[2], rows3, rows5); 
+							populateSmallTable(o3, dom[0], dom[1], dom[2], dom[4],  rows3, rows5); 
 						};
 						reader5.readAsText(file5);
 						
@@ -542,7 +550,7 @@
 								const rows5 = content5.split("\n");
 								var o3 = content1;
 								
-								populateSmallTable(o3, dom[0], dom[1], dom[2], rows3, rows5); 
+								populateSmallTable(o3, dom[0], dom[1], dom[2], dom[4], rows3, rows5); 
 							};
 							reader5.readAsText(file5);
 							
@@ -561,15 +569,17 @@
 	});
 
 	//Populate Table with results (multiple files)
-	function populateTable(finalresult, names, dtype, dend, rows, ids) {
+	function populateTable(finalresult, names, dtype, dend, rows, ids, dstart) {
 		const tableContainer = document.getElementById('tableContainer2');
 		tableContainer.innerHTML = ''; // Clear previous tables if exist
+		
+		
 		// Create tables for each 50 characters
 		createLegends(names, ids);
 		ccount = [];
 		icount = [];
 		for (let a = 0; a < finalresult.length; a++) {
-			ccount.push(0);
+			ccount.push(1);
 			icount.push(0);
 		}
 		ccount.push(0);
@@ -594,6 +604,7 @@
 				let tr = document.createElement('tr');
 				let dtype1 = dtype[x];
 				let dend1 = dend[x];
+				let dstart1 = dstart[x];
 				
 				//let n = names[x];
 				let td = document.createElement('td');
@@ -606,7 +617,7 @@
 					if (j >= finalresult[0].length) { break; }
 					const td = document.createElement('td');
 					td.textContent = fr[j];
-					if (dtype1[icount[x]] != undefined) {
+					if (dtype1[icount[x]] != undefined && ccount[x] >= dstart1[icount[x]]) {
 						if (dtype1[icount[x]] === "Extracellular") {
 							td.style.backgroundColor = "#ADD8E6";
 						}
@@ -619,11 +630,12 @@
 					}
 					
 					
-					if (ccount[x] > dend1[icount[x]]) { icount[x]++; }
+					
 					
 					if (fr[j] != '-') {
 						ccount[x]++;
 					}
+					if (ccount[x] > dend1[icount[x]]) { icount[x]++; }
 					if (ccount[x] % 50 == 0 && fr[j] != '-') {
 						td.style.textDecoration = "underline";
 					}
@@ -726,10 +738,12 @@
 			names = [];
 			dtype = [];
 			dend = [];
+			dstart = [];
 			const dom = getDOM(xmlContent[0]);
 			names.push(dom[0]);
 			dtype.push(dom[1]);
 			dend.push(dom[2]);
+			dstart.push(dom[4]);
 			r = dom[3];
 			for (let i = 1; i < xmlContent.length; i++) {
 				const dom = getDOM(xmlContent[i]);
@@ -737,6 +751,7 @@
 				dtype.push(dom[1]);
 				dend.push(dom[2]);
 				input.push(dom[3]);
+				dstart.push(dom[4]);
 				result = difference(r, dom[3], i);
 				r = result[0];
 				if (i == xmlContent.length - 1) {
@@ -745,7 +760,7 @@
 					for (let j = 0; j < input.length; j++) {
 						finalresult.push(difference(r, input[j])[1]);
 					}
-					populateTable(finalresult, names, dtype, dend, rows, ids);
+					populateTable(finalresult, names, dtype, dend, rows, ids, dstart);
 				}
 			}
 		};
