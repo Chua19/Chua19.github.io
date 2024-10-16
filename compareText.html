@@ -12,6 +12,7 @@
     <nav>
         <a href="#" onclick="showPage('page1')">Scoring</a>
         <a href="#" onclick="showPage('page2')">Comparison</a>
+		<a href="#" onclick="showPage('page3')">Sequence Formatting</a>
     </nav>
 </header>
 
@@ -29,6 +30,9 @@
 			<h3>Submit Second Type of CSV</h3>
 			<input type="file" id="csv2" accept=".csv">
 		</div>
+		<label for="myCheckbox">
+			<input type="checkbox" id="myCheckbox"> Only Extracellular
+		</label><br><br>
 	</div>
 	
 	<!-- Buttons -->
@@ -85,6 +89,17 @@
 	</div>
 </div>
 
+<div class="page" id="page3">
+	<h1>Remove Numbers and Whitespace</h1>
+    <form id="stringForm">
+        <label for="inputString">Enter a string:</label><br>
+        <input type="text" id="inputString" name="inputString"><br><br>
+        <button type="button" onclick="processString()">Submit</button>
+    </form>
+    <h2>Processed String:</h2>
+    <p id="outputString"></p>
+</div>
+
 <script src="diff.js"></script>
 <script>
 	//Switch between both pages
@@ -115,9 +130,9 @@
 		const div = document.getElementById("inputs1");
 		const i = document.getElementById("Input1");
 		if (i.type == "file") {
-			div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence</h3><input type="text" id="Input1"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit Second Type of CSV</h3><input type="file" id="csv2" accept=".csv"></div>';
+			div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence</h3><input type="text" id="Input1"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit Second Type of CSV</h3><input type="file" id="csv2" accept=".csv"></div><label for="myCheckbox"><input type="checkbox" id="myCheckbox"> Only Extracellular</label><br><br>';
 		} else {
-			div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence</h3><input type="file" id="Input1" accept=".txt"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit Second Type of CSV</h3><input type="file" id="csv2" accept=".csv"></div>'
+			div.innerHTML = '<div class="button-wrapper"><h3>Submit Sequence</h3><input type="file" id="Input1" accept=".txt"></div><div class="button-wrapper"><h3>Submit CSV 1</h3><input type="file" id="csv1" accept=".csv"></div><div class="button-wrapper"><h3>Submit Second Type of CSV</h3><input type="file" id="csv2" accept=".csv"></div><label for="myCheckbox"><input type="checkbox" id="myCheckbox"> Only Extracellular</label><br><br>'
 		}
 	});
 	
@@ -329,6 +344,7 @@
 		// Create tables for each 50 characters
 		var c3 = 1;
 		var i1 = 0;
+		var extracellularCounter = 1;
 		for (let i = 0; i < o3.length; i += 25) {
 			const table = document.createElement('table');
 			const tr1 = document.createElement('tr');
@@ -362,6 +378,15 @@
 			for (let j = i; j < i + 25; j++) {
 				//Checks for end of sequence
 				if (j >= o3.length) { break; }
+				
+				let checkbox = document.getElementById('myCheckbox');
+				
+				if (checkbox.checked && dtype1[i1] != "Extracellular") {
+					if (c3 >= dend1[i1]) { i1++; }
+					c3++;
+					continue;
+					
+				}
 				
 				const td1 = document.createElement('td');
 				const td2 = document.createElement('td');
@@ -685,6 +710,18 @@
 		
 		const div2 = document.getElementById("table2");
 		div2.innerHTML = '<p class="extracellular">Extracellular</p><p class="helical">Helical</p><p class="cytoplasmic">Cytoplasmic</p><p class="threshold">Above Score Threshold</p>';
+	}
+	
+	//Function to remove whitespace and newlines from string (format sequence)
+	function processString() {
+		// Get the input string
+		let input = document.getElementById('inputString').value;
+
+		// Remove numbers and whitespace
+		let processedString = input.replace(/[0-9\s]/g, '');
+
+		// Display the processed string
+		document.getElementById('outputString').innerText = processedString;
 	}
 	
 	//Run Script
