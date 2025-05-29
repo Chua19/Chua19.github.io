@@ -398,6 +398,10 @@
 				td1.textContent = j + 1;
 				td2.textContent = o3[j];
 				
+				if(td2.textContent === "C" && dtype1[i1] === "Extracellular") {
+					td2.style.color = "red";
+				}
+				
 				if (dtype1[i1] != undefined && c3 >= dstart1[i1]) {
 					if (dtype1[i1] === "Extracellular") {
 						td2.style.backgroundColor = "#ADD8E6";
